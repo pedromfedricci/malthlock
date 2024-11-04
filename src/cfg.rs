@@ -7,22 +7,6 @@ pub mod atomic {
     #[cfg(all(loom, test))]
     pub use loom::sync::atomic::{fence, AtomicBool, AtomicPtr};
 
-    impl<T> AtomicPtrNull for AtomicPtr<T> {
-        type Target = T;
-
-        #[rustfmt::skip]
-        #[cfg(not(all(loom, test)))]
-        const NULL_MUT: AtomicPtr<Self::Target> = {
-            Self::new(core::ptr::null_mut())
-        };
-
-        #[cfg(all(loom, test))]
-        #[cfg(not(tarpaulin_include))]
-        fn null_mut() -> AtomicPtr<Self::Target> {
-            Self::new(core::ptr::null_mut())
-        }
-    }
-
     impl<T> UnsyncLoad for AtomicPtr<T> {
         type Target = T;
 
@@ -42,23 +26,24 @@ pub mod atomic {
         }
     }
 
+    impl<T> AtomicPtrNull for AtomicPtr<T> {
+        type Target = T;
+
+        #[rustfmt::skip]
+        #[cfg(not(all(loom, test)))]
+        const NULL_MUT: AtomicPtr<Self::Target> = {
+            Self::new(core::ptr::null_mut())
+        };
+
+        #[cfg(all(loom, test))]
+        #[cfg(not(tarpaulin_include))]
+        fn null_mut() -> AtomicPtr<Self::Target> {
+            Self::new(core::ptr::null_mut())
+        }
+    }
+
     mod sealed {
         use super::AtomicPtr;
-
-        /// A trait that extends [`AtomicPtr`] to allow creating `null` values.
-        pub trait AtomicPtrNull {
-            /// The type of the data pointed to.
-            type Target;
-
-            /// A compiler time evaluable [`AtomicPtr`] poiting to `null`.
-            #[cfg(not(all(loom, test)))]
-            #[allow(clippy::declare_interior_mutable_const)]
-            const NULL_MUT: AtomicPtr<Self::Target>;
-
-            /// Returns a Loom based [`AtomicPtr`] poiting to `null` (non-const).
-            #[cfg(all(loom, test))]
-            fn null_mut() -> AtomicPtr<Self::Target>;
-        }
 
         /// A trait that extends [`AtomicPtr`] so that it will allow loading the
         /// value without any synchronization.
@@ -75,6 +60,21 @@ pub mod atomic {
             /// Load the value without any synchronization.
             unsafe fn load_unsynced(&self) -> *mut Self::Target;
         }
+
+        /// A trait that extends [`AtomicPtr`] to allow creating `null` values.
+        pub trait AtomicPtrNull {
+            /// The type of the data pointed to.
+            type Target;
+
+            /// A compiler time evaluable [`AtomicPtr`] poiting to `null`.
+            #[cfg(not(all(loom, test)))]
+            #[allow(clippy::declare_interior_mutable_const)]
+            const NULL_MUT: AtomicPtr<Self::Target>;
+
+            /// Returns a Loom based [`AtomicPtr`] poiting to `null` (non-const).
+            #[cfg(all(loom, test))]
+            fn null_mut() -> AtomicPtr<Self::Target>;
+        }
     }
 }
 
@@ -82,16 +82,10 @@ pub mod cell {
     pub use sealed::{CellNullMut, UnsafeCellOptionWith, UnsafeCellWith};
 
     #[cfg(not(all(loom, test)))]
-    pub use core::cell::Cell;
+    pub use core::cell::{Cell, UnsafeCell};
 
     #[cfg(all(loom, test))]
-    pub use loom::cell::Cell;
-
-    #[cfg(not(all(loom, test)))]
-    pub use core::cell::UnsafeCell;
-
-    #[cfg(all(loom, test))]
-    pub use loom::cell::UnsafeCell;
+    pub use loom::cell::{Cell, UnsafeCell};
 
     impl<T: ?Sized> UnsafeCellWith for UnsafeCell<T> {
         type Target = T;
