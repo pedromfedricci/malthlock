@@ -1,0 +1,39 @@
+[package]
+description = """
+An implementation of Dave Dice's scalable, concurrency restrictive and eventually
+fair lock for mutual exclusion, referred to as Malthusian Lock.
+"""
+name = "malthlock"
+version = "0.1.0"
+edition = "2021"
+# NOTE: Rust 1.70 is required for `AtomicPtr::as_ptr`.
+rust-version = "1.70.0"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+documentation = "https://docs.rs/malthlock"
+repository = "https://github.com/pedromfedricci/malthlock"
+authors = ["Pedro de Matos Fedricci <pedromfedricci@gmail.com>"]
+categories = ["algorithms", "concurrency"]
+keywords = ["mutex", "spinlock", "synchronization"]
+
+[features]
+yield = []
+thread_local = []
+
+[dependencies.rand_xoshiro]
+version = "0.6"
+
+[target.'cfg(loom)'.dev-dependencies.loom]
+version = "0.7"
+
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
+[lints.rust.unexpected_cfgs]
+level = "warn"
+check-cfg = ["cfg(loom)", "cfg(tarpaulin)", "cfg(tarpaulin_include)"]
+
+[[example]]
+name = "thread_local"
+required-features = ["thread_local"]
