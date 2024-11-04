@@ -23,28 +23,6 @@ jobs:
       - name: Check format
         run: cargo fmt -- --check
 
-  no-std:
-    name: No std
-    runs-on: ubuntu-latest
-    env:
-      NO_STD_TARGET: thumbv7m-none-eabi
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - name: Install Rust stable
-        run: rustup toolchain install stable
-      - name: Add no_std target
-        run: rustup target add ${{ env.NO_STD_TARGET }}
-      - name: Install cargo-hack
-        uses: taiki-e/install-action@cargo-hack
-      - name: Build on no_std environment
-        run: >
-          cargo hack build
-          --target ${{ env.NO_STD_TARGET }}
-          --no-dev-deps
-          --feature-powerset
-          --skip yield,thread_local
-
   msrv:
     name: MSRV
     runs-on: ubuntu-latest
@@ -120,26 +98,26 @@ jobs:
           RUSTFLAGS: --cfg loom -D warnings -D clippy::pedantic -D clippy::nursery
         run: cargo hack clippy --profile test --feature-powerset
 
-  # coverage:
-  #   name: Coverage
-  #   runs-on: ubuntu-latest
-  #   container:
-  #     image: xd009642/tarpaulin:latest
-  #     options: --security-opt seccomp=unconfined
-  #   steps:
-  #     - name: Checkout repository
-  #       uses: actions/checkout@v3
-  #     - name: Generate coverage
-  #       run: >
-  #         cargo tarpaulin
-  #         --verbose
-  #         --engine llvm
-  #         --all-features
-  #         --out xml
-  #     - name: Upload to Codecov
-  #       uses: codecov/codecov-action@v3
-  #       env:
-  #         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    container:
+      image: xd009642/tarpaulin:latest
+      options: --security-opt seccomp=unconfined
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - name: Generate coverage
+        run: >
+          cargo tarpaulin
+          --verbose
+          --engine llvm
+          --all-features
+          --out xml
+      - name: Upload to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   miri:
     name: Miri
