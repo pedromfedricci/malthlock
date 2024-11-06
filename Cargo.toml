@@ -1,7 +1,7 @@
 [package]
 description = """
-An implementation of Dave Dice's scalable, concurrency restrictive and eventually
-fair lock for mutual exclusion, referred to as Malthusian Lock.
+An opinionated implementation of Dave Dice's scalable, concurrency restrictive
+and eventually fair lock for mutual exclusion, referred to as Malthusian lock.
 """
 name = "malthlock"
 version = "0.1.0"

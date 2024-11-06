@@ -1,4 +1,4 @@
-# A simple and correct implementation of the Malthusian lock
+# An opinionated implementation of the Malthusian lock
 
 ## Minimum Supported Rust Version (MSRV)
 
