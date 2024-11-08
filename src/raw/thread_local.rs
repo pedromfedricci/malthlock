@@ -192,7 +192,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     /// Panic: thread local node cannot be borrowed more than once at the same
     /// time:
     ///
-    #[doc = concat!("```should_panic,", already_borrowed_error!())]
+    #[doc = concat!("```should_panic(expected = ", already_borrowed_error!(), ")")]
     /// use malthlock::raw::spins::Mutex;
     ///
     /// malthlock::thread_local_node!(static NODE);
@@ -366,7 +366,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     /// Panic: thread local node cannot be borrowed more than once at the same
     /// time:
     ///
-    #[doc = concat!("```should_panic,", already_borrowed_error!())]
+    #[doc = concat!("```should_panic(expected = ", already_borrowed_error!(), ")")]
     /// use malthlock::raw::spins::Mutex;
     ///
     /// malthlock::thread_local_node!(static NODE);

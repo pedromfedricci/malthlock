@@ -42,6 +42,6 @@ macro_rules! __thread_local_node_inner {
 /// The local node error message as a string literal.
 macro_rules! already_borrowed_error {
     () => {
-        "malthlock::raw::LocalMutexNode is already mutably borrowed"
+        "malthlock's thread local node is already mutably borrowed"
     };
 }
