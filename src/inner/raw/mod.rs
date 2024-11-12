@@ -38,7 +38,7 @@ impl<L> MutexNodeInit<L> {
     /// Both pointers are required to be non-null and aligned, and the current
     /// thread must have exclusive access over them.
     unsafe fn link_next(this: *mut Self, node: *mut Self) {
-        unsafe { (*this).next = AtomicPtr::new(node) }
+        unsafe { (*this).next = AtomicPtr::new(node) };
     }
 
     /// Updates first node's `prev` pointer with second node's value.
@@ -48,7 +48,7 @@ impl<L> MutexNodeInit<L> {
     /// Both pointers are required to be non-null and aligned, and the current
     /// thread must have exclusive access over them.
     unsafe fn link_prev(this: *mut Self, node: *mut Self) {
-        unsafe { (*this).prev = Cell::new(node) }
+        unsafe { (*this).prev.set(node) };
     }
 
     /// Sets node's `next` and `prev` pointers to null and return it.
@@ -65,50 +65,24 @@ impl<L> MutexNodeInit<L> {
         this
     }
 
-    /// Sets node's `next`, core based pointer to null.
+    /// Sets node's `next` pointer to null.
     ///
     /// # Safety
     ///
     /// Pointer is required to be non-null and aligned, and the current thread
     /// must have exclusive access over it.
-    #[cfg(not(all(loom, test)))]
     unsafe fn unlink_next(this: *mut Self) {
-        unsafe { (*this).next = AtomicPtr::NULL_MUT }
+        unsafe { (*this).next = AtomicPtr::null_mut() };
     }
 
-    /// Sets node's `next`, loom based pointer to null.
+    /// Sets node's `prev` pointer to `null`.
     ///
     /// # Safety
     ///
     /// Pointer is required to be non-null and aligned, and the current thread
     /// must have exclusive access over it.
-    #[cfg(all(loom, test))]
-    #[cfg(not(tarpaulin_include))]
-    unsafe fn unlink_next(this: *mut Self) {
-        unsafe { (*this).next = AtomicPtr::null_mut() }
-    }
-
-    /// Sets node's `prev`, core based pointer to null.
-    ///
-    /// # Safety
-    ///
-    /// Pointer is required to be non-null and aligned, and the current thread
-    /// must have exclusive access over it.
-    #[cfg(not(all(loom, test)))]
     unsafe fn unlink_prev(this: *mut Self) {
-        unsafe { (*this).prev = Cell::NULL_MUT }
-    }
-
-    /// Sets node's `prev`, loom based pointer to null.
-    ///
-    /// # Safety
-    ///
-    /// Pointer is required to be non-null and aligned, and the current thread
-    /// must have exclusive access over it.
-    #[cfg(all(loom, test))]
-    #[cfg(not(tarpaulin_include))]
-    unsafe fn unlink_prev(this: *mut Self) {
-        unsafe { (*this).prev = Cell::null_mut() }
+        unsafe { (*this).prev.set_null() };
     }
 }
 
@@ -399,7 +373,7 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
             unsafe { self.demote_active_head_next(head, &*next) }
         } else {
             // SAFETY: Already verified that `next` pointer is not null.
-            unsafe { &*next }.lock.notify();
+            unsafe { &*next }.lock.notify_release();
         }
     }
 
@@ -419,7 +393,7 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
         // this thread has exclusive access over head's `next` pointer.
         unsafe { MutexNodeInit::link_next(head.as_ptr(), new_next) }
         // SAFETY: Already verified that head's new successor is not null.
-        unsafe { &*new_next }.lock.notify();
+        unsafe { &*new_next }.lock.notify_release();
     }
 
     /// Selects the tail of the passive set (if any) as the successor of the
@@ -443,7 +417,7 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
         // the passive set.
         unsafe {
             self.link_active_head_next(head, passive_tail);
-            (*passive_tail).lock.notify();
+            (*passive_tail).lock.notify_release();
         }
         true
     }
@@ -465,14 +439,14 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
             let next = wait_next_acquire::<L, W::UnlockRelax>(&head.next);
             // SAFETY: Successor has already finished linking, therefore `next`
             // pointer is not null.
-            unsafe { &*next }.lock.notify();
+            unsafe { &*next }.lock.notify_release();
         } else {
             // SAFETY: Already verified that `passive_head` pointer is not null
             // and caller guaranteed that the current thread has exclusive
             // access over the passive set.
             unsafe {
                 self.link_active_head_next(head, passive_head);
-                (*passive_head).lock.notify();
+                (*passive_head).lock.notify_release();
             }
         }
     }

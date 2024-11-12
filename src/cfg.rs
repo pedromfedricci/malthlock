@@ -11,18 +11,14 @@ pub mod atomic {
         type Target = T;
 
         #[cfg(not(all(loom, test)))]
-        unsafe fn load_unsynced(&self) -> *mut Self::Target {
-            // SAFETY: Caller guaranteed that the atomic value is not currently
-            // visible by any other thread.
-            unsafe { *self.as_ptr() }
+        fn load_unsynced(&mut self) -> *mut Self::Target {
+            *self.get_mut()
         }
 
         #[cfg(all(loom, test))]
         #[cfg(not(tarpaulin_include))]
-        unsafe fn load_unsynced(&self) -> *mut Self::Target {
-            // SAFETY: Caller guaranteed that the atomic value is not currently
-            // visible by any other thread.
-            unsafe { self.unsync_load() }
+        fn load_unsynced(&mut self) -> *mut Self::Target {
+            self.with_mut(|ptr| *ptr)
         }
     }
 
@@ -35,8 +31,6 @@ pub mod atomic {
             Self::new(core::ptr::null_mut())
         };
 
-        #[cfg(all(loom, test))]
-        #[cfg(not(tarpaulin_include))]
         fn null_mut() -> AtomicPtr<Self::Target> {
             Self::new(core::ptr::null_mut())
         }
@@ -46,19 +40,14 @@ pub mod atomic {
         use super::AtomicPtr;
 
         /// A trait that extends [`AtomicPtr`] so that it will allow loading the
-        /// value without any synchronization.
+        /// the raw pointer without any synchronization.
         ///
-        /// # Safety
-        ///
-        /// Caller must guarantee that the atomic value is not currently visible
-        /// by any other thread, as this is equivalent to a non-atomic load over
-        /// the value.
         pub trait UnsyncLoad {
             /// The type of the pointed to value.
             type Target;
 
             /// Load the value without any synchronization.
-            unsafe fn load_unsynced(&self) -> *mut Self::Target;
+            fn load_unsynced(&mut self) -> *mut Self::Target;
         }
 
         /// A trait that extends [`AtomicPtr`] to allow creating `null` values.
@@ -71,8 +60,7 @@ pub mod atomic {
             #[allow(clippy::declare_interior_mutable_const)]
             const NULL_MUT: AtomicPtr<Self::Target>;
 
-            /// Returns a Loom based [`AtomicPtr`] poiting to `null` (non-const).
-            #[cfg(all(loom, test))]
+            /// Returns a [`AtomicPtr`] instance poiting to `null` (non-const).
             fn null_mut() -> AtomicPtr<Self::Target>;
         }
     }
@@ -167,6 +155,10 @@ pub mod cell {
         fn null_mut() -> Cell<*mut Self::Target> {
             Self::new(core::ptr::null_mut())
         }
+
+        fn set_null(&self) {
+            self.set(core::ptr::null_mut());
+        }
     }
 
     mod sealed {
@@ -229,6 +221,9 @@ pub mod cell {
             /// Returns a Loom based [`Cell`] holding a `null` pointer (non-const).
             #[cfg(all(loom, test))]
             fn null_mut() -> Cell<*mut Self::Target>;
+
+            /// Sets the inner value to `null` through a shared reference.
+            fn set_null(&self);
         }
     }
 }
