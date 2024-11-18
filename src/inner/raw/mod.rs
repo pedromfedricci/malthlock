@@ -51,7 +51,7 @@ impl<L> MutexNodeInit<L> {
         unsafe { (*this).prev.set(node) };
     }
 
-    /// Sets node's `next` and `prev` pointers to null and return it.
+    /// Sets node's `next` and `prev` pointers to `null` and return it.
     ///
     /// # Safety
     ///
@@ -65,7 +65,7 @@ impl<L> MutexNodeInit<L> {
         this
     }
 
-    /// Sets node's `next` pointer to null.
+    /// Sets node's `next` pointer to `null`.
     ///
     /// # Safety
     ///
@@ -193,8 +193,8 @@ impl<L> PassiveSet<L> {
         let head = self.head.get();
         // SAFETY: Caller guaranteed that `node` is a non-null and aligned
         // pointer, and that this thread has exclusive access to its value.
-        unsafe { MutexNodeInit::link_next(node, head) }
-        unsafe { MutexNodeInit::unlink_prev(node) }
+        unsafe { MutexNodeInit::link_next(node, head) };
+        unsafe { MutexNodeInit::unlink_prev(node) };
         self.head.set(node);
         // SAFETY: Already verified that `head` pointer is not null.
         (!head.is_null()).then(|| unsafe { MutexNodeInit::link_prev(head, node) });
@@ -218,7 +218,7 @@ impl<L> PassiveSet<L> {
         } else {
             // SAFETY: Caller guaranteed that the current thread has exclusive
             // access over the passive set.
-            unsafe { self.unlink_tail_next() }
+            unsafe { self.unlink_tail_next() };
         }
         // SAFETY: Already verified that `tail` pointer is not null and caller
         // guaranteed that the current thread has exclusive access over the
@@ -243,7 +243,7 @@ impl<L> PassiveSet<L> {
         } else {
             // SAFETY: Caller guaranteed that the current thread has exclusive
             // access over the passive set.
-            unsafe { self.unlink_head_prev() }
+            unsafe { self.unlink_head_prev() };
         }
         // SAFETY: Already verified that `head` pointer is not null and caller
         // guaranteed that the current thread has exclusive access over the
@@ -251,24 +251,24 @@ impl<L> PassiveSet<L> {
         unsafe { MutexNodeInit::unlink(head) }
     }
 
-    /// Sets `tail`'s next pointer to null.
+    /// Sets `tail`'s next pointer to `null`.
     ///
     /// # Safety
     ///
     /// Self's `tail` must be a non-null, well aligned pointer and the current
     /// thread must have exclusive access to it.
     unsafe fn unlink_tail_next(&self) {
-        unsafe { MutexNodeInit::unlink_next(self.tail.get()) }
+        unsafe { MutexNodeInit::unlink_next(self.tail.get()) };
     }
 
-    /// Sets `head`'s previous pointer to null.
+    /// Sets `head`'s previous pointer to `null`.
     ///
     /// # Safety
     ///
     /// Self's `head` must be a non-null, well aligned pointer and the current
     /// thread must have exclusive access to it.
     unsafe fn unlink_head_prev(&self) {
-        unsafe { MutexNodeInit::unlink_prev(self.head.get()) }
+        unsafe { MutexNodeInit::unlink_prev(self.head.get()) };
     }
 }
 
@@ -365,12 +365,12 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
         if next.is_null() {
             // SAFETY: Caller guaranteed that the current thread has exclusive
             // access over the passive set.
-            unsafe { self.promote_passive_head(head) }
+            unsafe { self.promote_passive_head(head) };
         } else if next != self.tail.load(Acquire) {
             // SAFETY: Already verified that `next` pointer is not null and
             // caller guaranteed that the current thread has exclusive access
             // over the passive set.
-            unsafe { self.demote_active_head_next(head, &*next) }
+            unsafe { self.demote_active_head_next(head, &*next) };
         } else {
             // SAFETY: Already verified that `next` pointer is not null.
             unsafe { &*next }.lock.notify_release();
@@ -388,10 +388,10 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
         let new_next = wait_next_acquire::<L, W::UnlockRelax>(&next.next);
         // SAFETY: Caller guaranteed that the current thread is the unlocking
         // thread and therefore it has exclusive access over the passive set.
-        unsafe { self.passive_set.push_front(next.as_ptr()) }
+        unsafe { self.passive_set.push_front(next.as_ptr()) };
         // SAFETY: Head's successor has already finished linking, therefore
         // this thread has exclusive access over head's `next` pointer.
-        unsafe { MutexNodeInit::link_next(head.as_ptr(), new_next) }
+        unsafe { MutexNodeInit::link_next(head.as_ptr(), new_next) };
         // SAFETY: Already verified that head's new successor is not null.
         unsafe { &*new_next }.lock.notify_release();
     }
@@ -463,16 +463,16 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
             // SAFETY: On success, `head` has no pending successors and it is
             // no longer the queue's tail, therefore this thread has exclusive
             // acceess over its `next` pointer.
-            unsafe { MutexNodeInit::link_next(head, node) }
+            unsafe { MutexNodeInit::link_next(head, node) };
         } else {
             let next = wait_next_acquire::<L, W::UnlockRelax>(&head.next);
             // SAFETY: Caller guaranteed that `node` is a non-null and aligned
             // pointer and that this thread has exclusive access over it.
-            unsafe { MutexNodeInit::link_next(node, next) }
+            unsafe { MutexNodeInit::link_next(node, next) };
             // SAFETY: The `head` is not the queue's tail and its successor has
             // already finished linking, therefore this thread has exclusive
             // access over its `next` pointer.
-            unsafe { MutexNodeInit::link_next(head.as_ptr(), node) }
+            unsafe { MutexNodeInit::link_next(head.as_ptr(), node) };
             fence(Acquire);
         }
     }
