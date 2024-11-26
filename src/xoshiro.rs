@@ -3,7 +3,7 @@ use rand_xoshiro::{Seed512, Xoshiro512StarStar};
 
 use crate::cfg::cell::{UnsafeCell, UnsafeCellWith};
 use crate::cfg::thread::LocalKey;
-use crate::fairness::Fairness;
+use crate::fairness::FairnessImpl;
 
 /// A random generator.
 struct Generator {
@@ -57,7 +57,7 @@ static GENERATOR: LocalGenerator = {
     LocalGenerator { key: &GENERATOR }
 };
 
-impl Fairness for LocalGenerator {
+impl FairnessImpl for LocalGenerator {
     fn get() -> &'static Self {
         &GENERATOR
     }
