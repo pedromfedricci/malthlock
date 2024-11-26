@@ -4,6 +4,7 @@ use core::ops::{Deref, DerefMut};
 use crate::cfg::atomic::AtomicBool;
 use crate::inner::raw as inner;
 use crate::relax::{Relax, RelaxWait};
+use crate::xoshiro::LocalGenerator;
 
 #[cfg(test)]
 use crate::test::{LockNew, LockThen, TryLockThen};
@@ -130,7 +131,7 @@ impl Default for MutexNode {
 /// [`try_lock_then`]: Mutex::try_lock_then
 /// [`try_lock_with_then`]: Mutex::try_lock_with_then
 pub struct Mutex<T: ?Sized, R> {
-    pub(super) inner: inner::Mutex<T, AtomicBool, RelaxWait<R>>,
+    pub(super) inner: inner::Mutex<T, AtomicBool, RelaxWait<R>, LocalGenerator>,
 }
 
 // Same unsafe impls as `crate::inner::raw::Mutex`.

@@ -4,6 +4,7 @@ use core::panic::Location;
 
 use super::{Mutex, MutexNode};
 use crate::cfg::thread::LocalKey;
+use crate::fairness::Fairness;
 use crate::lock::{Lock, Wait};
 
 type Key<N> = &'static LocalMutexNode<N>;
@@ -45,7 +46,7 @@ fn panic_already_borrowed(caller: &Location<'static>) -> ! {
     panic!("{}, conflict at: {}", already_borrowed_error!(), caller)
 }
 
-impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
+impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
     /// Attempts to acquire this mutex with a thread local node and then runs
     /// a closure against the protected data.
     ///
@@ -53,10 +54,10 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
     ///
     /// See: `with_local_node_then`.
     #[track_caller]
-    pub fn try_lock_with_local_then<N, F, Ret>(&self, node: Key<N>, f: F) -> Ret
+    pub fn try_lock_with_local_then<N, Fn, Ret>(&self, node: Key<N>, f: Fn) -> Ret
     where
         N: DerefMut<Target = MutexNode<L>>,
-        F: FnOnce(Option<&mut T>) -> Ret,
+        Fn: FnOnce(Option<&mut T>) -> Ret,
     {
         self.with_local_node_then(node, |m, n| m.try_lock_with_then(n, f))
     }
@@ -71,10 +72,10 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
     /// # Panics
     ///
     /// See: `with_local_node_then_unchecked`.
-    pub unsafe fn try_lock_with_local_then_unchecked<F, Ret, N>(&self, node: Key<N>, f: F) -> Ret
+    pub unsafe fn try_lock_with_local_then_unchecked<Fn, Ret, N>(&self, node: Key<N>, f: Fn) -> Ret
     where
         N: DerefMut<Target = MutexNode<L>>,
-        F: FnOnce(Option<&mut T>) -> Ret,
+        Fn: FnOnce(Option<&mut T>) -> Ret,
     {
         self.with_local_node_then_unchecked(node, |m, n| m.try_lock_with_then(n, f))
     }
@@ -86,10 +87,10 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
     ///
     /// See: `with_local_node_then`.
     #[track_caller]
-    pub fn lock_with_local_then<N, F, Ret>(&self, node: Key<N>, f: F) -> Ret
+    pub fn lock_with_local_then<N, Fn, Ret>(&self, node: Key<N>, f: Fn) -> Ret
     where
         N: DerefMut<Target = MutexNode<L>>,
-        F: FnOnce(&mut T) -> Ret,
+        Fn: FnOnce(&mut T) -> Ret,
     {
         self.with_local_node_then(node, |m, n| m.lock_with_then(n, f))
     }
@@ -104,10 +105,10 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
     /// # Panics
     ///
     /// See: `with_local_node_then_unchecked`.
-    pub unsafe fn lock_with_local_then_unchecked<N, F, Ret>(&self, node: Key<N>, f: F) -> Ret
+    pub unsafe fn lock_with_local_then_unchecked<N, Fn, Ret>(&self, node: Key<N>, f: Fn) -> Ret
     where
         N: DerefMut<Target = MutexNode<L>>,
-        F: FnOnce(&mut T) -> Ret,
+        Fn: FnOnce(&mut T) -> Ret,
     {
         self.with_local_node_then_unchecked(node, |m, n| m.lock_with_then(n, f))
     }
@@ -121,10 +122,10 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
     /// Panics if the key currently has its destructor running, and it **may**
     /// panic if the destructor has previously been run for this thread.
     #[track_caller]
-    fn with_local_node_then<N, F, Ret>(&self, node: Key<N>, f: F) -> Ret
+    fn with_local_node_then<N, Fn, Ret>(&self, node: Key<N>, f: Fn) -> Ret
     where
         N: DerefMut<Target = MutexNode<L>>,
-        F: FnOnce(&Self, &mut MutexNode<L>) -> Ret,
+        Fn: FnOnce(&Self, &mut MutexNode<L>) -> Ret,
     {
         let caller = Location::caller();
         let panic = |_| panic_already_borrowed(caller);
@@ -147,10 +148,10 @@ impl<T: ?Sized, L: Lock, W: Wait> Mutex<T, L, W> {
     ///
     /// Panics if the key currently has its destructor running, and it **may**
     /// panic if the destructor has previously been run for this thread.
-    unsafe fn with_local_node_then_unchecked<N, F, Ret>(&self, node: Key<N>, f: F) -> Ret
+    unsafe fn with_local_node_then_unchecked<N, Fn, Ret>(&self, node: Key<N>, f: Fn) -> Ret
     where
         N: DerefMut<Target = MutexNode<L>>,
-        F: FnOnce(&Self, &mut MutexNode<L>) -> Ret,
+        Fn: FnOnce(&Self, &mut MutexNode<L>) -> Ret,
     {
         // SAFETY: Caller guaranteed that no other references are live.
         node.key.with(|node| f(self, unsafe { &mut *node.as_ptr() }))
