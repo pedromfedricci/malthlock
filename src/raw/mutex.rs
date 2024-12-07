@@ -7,7 +7,7 @@ use crate::relax::{Relax, RelaxWait};
 use crate::xoshiro::LocalGenerator;
 
 #[cfg(test)]
-use crate::test::{LockNew, LockThen, TryLockThen};
+use crate::test::{LockNew, LockThen, LockWithThen, TryLockThen, TryLockWithThen};
 
 /// A locally-accessible record for forming the waiting queue.
 ///
@@ -502,12 +502,39 @@ impl<T: ?Sized, R> LockNew for Mutex<T, R> {
 }
 
 #[cfg(test)]
-impl<T: ?Sized, R: Relax> LockThen for Mutex<T, R> {
-    type Guard<'a> = &'a mut Self::Target
+impl<T: ?Sized, R: Relax> LockWithThen for Mutex<T, R> {
+    type Node = MutexNode;
+
+    type Guard<'a>
+        = &'a mut Self::Target
     where
         Self: 'a,
         Self::Target: 'a;
 
+    fn lock_with_then<F, Ret>(&self, node: &mut Self::Node, f: F) -> Ret
+    where
+        F: FnOnce(&mut Self::Target) -> Ret,
+    {
+        self.lock_with_then(node, f)
+    }
+}
+
+#[cfg(test)]
+impl<T: ?Sized, R: Relax> TryLockWithThen for Mutex<T, R> {
+    fn try_lock_with_then<F, Ret>(&self, node: &mut Self::Node, f: F) -> Ret
+    where
+        F: FnOnce(Option<&mut Self::Target>) -> Ret,
+    {
+        self.try_lock_with_then(node, f)
+    }
+
+    fn is_locked(&self) -> bool {
+        self.is_locked()
+    }
+}
+
+#[cfg(test)]
+impl<T: ?Sized, R: Relax> LockThen for Mutex<T, R> {
     fn lock_then<F, Ret>(&self, f: F) -> Ret
     where
         F: FnOnce(&mut Self::Target) -> Ret,
@@ -523,10 +550,6 @@ impl<T: ?Sized, R: Relax> TryLockThen for Mutex<T, R> {
         F: FnOnce(Option<&mut Self::Target>) -> Ret,
     {
         self.try_lock_then(f)
-    }
-
-    fn is_locked(&self) -> bool {
-        self.is_locked()
     }
 }
 
