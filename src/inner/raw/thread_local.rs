@@ -77,7 +77,7 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
         N: DerefMut<Target = MutexNode<L>>,
         Fn: FnOnce(Option<&mut T>) -> Ret,
     {
-        self.with_local_node_then_unchecked(node, |m, n| m.try_lock_with_then(n, f))
+        unsafe { self.with_local_node_then_unchecked(node, |m, n| m.try_lock_with_then(n, f)) }
     }
 
     /// Attempts to acquire this mutex with a thread local node and then runs
@@ -110,7 +110,7 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
         N: DerefMut<Target = MutexNode<L>>,
         Fn: FnOnce(&mut T) -> Ret,
     {
-        self.with_local_node_then_unchecked(node, |m, n| m.lock_with_then(n, f))
+        unsafe { self.with_local_node_then_unchecked(node, |m, n| m.lock_with_then(n, f)) }
     }
 
     /// Runs `f` over a raw mutex and a thread local node as arguments.

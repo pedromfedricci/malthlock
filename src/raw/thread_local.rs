@@ -305,7 +305,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     where
         F: FnOnce(Option<&mut T>) -> Ret,
     {
-        self.inner.try_lock_with_local_then_unchecked(&node.inner, f)
+        unsafe { self.inner.try_lock_with_local_then_unchecked(&node.inner, f) }
     }
 
     /// Acquires this mutex and then runs the closure against the protected data.
@@ -472,7 +472,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     where
         F: FnOnce(&mut T) -> Ret,
     {
-        self.inner.lock_with_local_then_unchecked(&node.inner, f)
+        unsafe { self.inner.lock_with_local_then_unchecked(&node.inner, f) }
     }
 
     /// Mutable borrows must not escape the closure.

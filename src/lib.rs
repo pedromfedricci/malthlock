@@ -4,7 +4,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::inline_always)]
 #![allow(clippy::doc_markdown)]
-#![warn(rust_2021_compatibility)]
+#![warn(rust_2024_compatibility)]
 #![warn(missing_docs)]
 
 #[cfg(feature = "thread_local")]

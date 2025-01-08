@@ -117,10 +117,10 @@ impl<L> MutexNodeInit<L> {
     /// # Safety
     ///
     /// Pointer is required to be non-null and aligned, and the current thread
-    /// must have exclusive access over it.
+    /// must have exclusive access over its `next` pointer.
     unsafe fn get_next(this: *mut Self) -> *mut Self {
         // SAFETY: Caller guaranteed that `this` is valid and that the current
-        // thread has exclusive access over it.
+        // thread has exclusive access over its `next` pointer.
         unsafe { &mut (*this).next }.load_unsynced()
     }
 
