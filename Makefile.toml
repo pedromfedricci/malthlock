@@ -15,8 +15,16 @@ args = ["target", "add", "thumbv7m-none-eabi"]
 # Build package for no_std environment.
 [tasks.no-std]
 command = "cargo"
-args = ["hack", "build", "--target", "thumbv7m-none-eabi", "--feature-powerset",
-        "--no-dev-deps", "--skip", "yield,thread_local"]
+args = [
+  "hack",
+  "build",
+  "--target",
+  "thumbv7m-none-eabi",
+  "--feature-powerset",
+  "--no-dev-deps",
+  "--skip",
+  "yield,thread_local",
+]
 dependencies = ["install-no-std-target"]
 
 # Build docs for docs.rs.
@@ -63,8 +71,14 @@ args = ["run", "--example", "${@}", "--all-features"]
 [tasks.test-lint]
 command = "cargo"
 env = { "RUSTFLAGS" = "${CLIPPY_FLAGS}" }
-args = ["hack", "clippy", "--profile", "test", "--feature-powerset",
-        "--no-dev-deps"]
+args = [
+  "hack",
+  "clippy",
+  "--profile",
+  "test",
+  "--feature-powerset",
+  "--no-dev-deps",
+]
 
 # Run tests under miri.
 # NOTE: must run as: `cargo +nightly make miri`.
