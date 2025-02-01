@@ -7,7 +7,7 @@
 #[doc(hidden)]
 #[macro_export]
 macro_rules! __thread_local_node_inner {
-    ($vis:vis $node:ident, $($mod:ident$(::)?)+) => {
+    ($vis:vis $node:ident, $($mod:ident)::+) => {
         $vis const $node: $crate::$($mod::)+LocalMutexNode = {
             ::std::thread_local! {
                 static NODE: ::core::cell::RefCell<$crate::$($mod::)+MutexNode> = const {

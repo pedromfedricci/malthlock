@@ -497,6 +497,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     ///     });
     /// });
     /// ```
+    #[cfg(doctest)]
     #[cfg(not(tarpaulin_include))]
     const fn __borrows_must_not_escape_closure() {}
 }
