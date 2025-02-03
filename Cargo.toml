@@ -21,7 +21,7 @@ yield = []
 thread_local = []
 
 [dependencies.rand_xoshiro]
-version = "0.6"
+version = "0.7"
 
 [target.'cfg(loom)'.dev-dependencies.loom]
 version = "0.7"
