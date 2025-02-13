@@ -134,8 +134,9 @@ pub struct Mutex<T: ?Sized, R> {
     pub(super) inner: inner::Mutex<T, AtomicBool, RelaxWait<R>, LocalGenerator>,
 }
 
-// Same unsafe impls as `crate::inner::raw::Mutex`.
+// SAFETY: `inner::Mutex` is `Send` if `T` is `Send`.
 unsafe impl<T: ?Sized + Send, R> Send for Mutex<T, R> {}
+// SAFETY: `inner::Mutex` is `Sync` if `T` is `Send`.
 unsafe impl<T: ?Sized + Send, R> Sync for Mutex<T, R> {}
 
 impl<T, R> Mutex<T, R> {

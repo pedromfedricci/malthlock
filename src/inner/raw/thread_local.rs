@@ -52,7 +52,10 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
     ///
     /// # Panics
     ///
-    /// See: `with_local_node_then`.
+    /// Will panic if the thread local node is already mutably borrowed.
+    ///
+    /// Panics if the key currently has its destructor running, and it **may**
+    /// panic if the destructor has previously been run for this thread.
     #[track_caller]
     pub fn try_lock_with_local_then<N, Fn, Ret>(&self, node: Key<N>, f: Fn) -> Ret
     where
@@ -67,16 +70,20 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
     ///
     /// # Safety
     ///
-    /// See: `with_local_node_then_unchecked`.
+    /// Caller must guarantee that the thread local node is not already in use
+    /// for the current thread. A thread local node is released to the current
+    /// thread once the associated `f` closure runs out of scope.
     ///
     /// # Panics
     ///
-    /// See: `with_local_node_then_unchecked`.
+    /// Panics if the key currently has its destructor running, and it **may**
+    /// panic if the destructor has previously been run for this thread.
     pub unsafe fn try_lock_with_local_then_unchecked<Fn, Ret, N>(&self, node: Key<N>, f: Fn) -> Ret
     where
         N: DerefMut<Target = MutexNode<L>>,
         Fn: FnOnce(Option<&mut T>) -> Ret,
     {
+        // SAFETY: Caller guaranteed that we have exclusive access over `node`.
         unsafe { self.with_local_node_then_unchecked(node, |m, n| m.try_lock_with_then(n, f)) }
     }
 
@@ -85,7 +92,10 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
     ///
     /// # Panics
     ///
-    /// See: `with_local_node_then`.
+    /// Will panic if the thread local node is already mutably borrowed.
+    ///
+    /// Panics if the key currently has its destructor running, and it **may**
+    /// panic if the destructor has previously been run for this thread.
     #[track_caller]
     pub fn lock_with_local_then<N, Fn, Ret>(&self, node: Key<N>, f: Fn) -> Ret
     where
@@ -100,16 +110,20 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
     ///
     /// # Safety
     ///
-    /// See: `with_local_node_then_unchecked`.
+    /// Caller must guarantee that the thread local node is not already in use
+    /// for the current thread. A thread local node is released to the current
+    /// thread once the associated `f` closure runs out of scope.
     ///
     /// # Panics
     ///
-    /// See: `with_local_node_then_unchecked`.
+    /// Panics if the key currently has its destructor running, and it **may**
+    /// panic if the destructor has previously been run for this thread.
     pub unsafe fn lock_with_local_then_unchecked<N, Fn, Ret>(&self, node: Key<N>, f: Fn) -> Ret
     where
         N: DerefMut<Target = MutexNode<L>>,
         Fn: FnOnce(&mut T) -> Ret,
     {
+        // SAFETY: Caller guaranteed that we have exclusive access over `node`.
         unsafe { self.with_local_node_then_unchecked(node, |m, n| m.lock_with_then(n, f)) }
     }
 
@@ -141,8 +155,8 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
     /// Mutably borrowing a [`RefCell`] while references are still live is
     /// undefined behaviour. Threfore, caller must guarantee that the thread
     /// local node is not already in use for the current thread. A thread local
-    /// node is release to the current thread once the associated `with_local`'s
-    /// f closure runs out of scope.
+    /// node is released to the current thread once the associated `f` closure
+    /// runs out of scope.
     ///
     /// # Panics
     ///
@@ -153,7 +167,7 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Mutex<T, L, W, F> {
         N: DerefMut<Target = MutexNode<L>>,
         Fn: FnOnce(&Self, &mut MutexNode<L>) -> Ret,
     {
-        // SAFETY: Caller guaranteed that no other references are live.
+        // SAFETY: Caller guaranteed that we have exclusive access over `node`.
         node.key.with(|node| f(self, unsafe { &mut *node.as_ptr() }))
     }
 }

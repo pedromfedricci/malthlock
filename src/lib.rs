@@ -1,11 +1,12 @@
 //! TODO: docs
 
-#![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::inline_always)]
 #![allow(clippy::doc_markdown)]
-#![warn(rust_2024_compatibility)]
 #![warn(missing_docs)]
+#![warn(rust_2024_compatibility)]
+#![warn(clippy::undocumented_unsafe_blocks)]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 #[cfg(feature = "thread_local")]
 #[macro_use]

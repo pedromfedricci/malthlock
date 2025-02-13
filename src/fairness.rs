@@ -34,7 +34,6 @@ pub trait FairnessImpl: 'static {
 // SAFETY: Both `get` and `should_promote_passive_tail` function implementation
 // are protected with a process abort (under test with unwind on panic
 // configuration) in case any of them where to panic the thread.
-#[doc(hidden)]
 unsafe impl<F: FairnessImpl> Fairness for F {
     #[inline(always)]
     fn get() -> &'static Self {

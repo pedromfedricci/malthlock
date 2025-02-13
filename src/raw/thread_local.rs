@@ -305,6 +305,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     where
         F: FnOnce(Option<&mut T>) -> Ret,
     {
+        // SAFETY: Caller guaranteed that we have exclusive access over `node`.
         unsafe { self.inner.try_lock_with_local_then_unchecked(&node.inner, f) }
     }
 
@@ -472,6 +473,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     where
         F: FnOnce(&mut T) -> Ret,
     {
+        // SAFETY: Caller guaranteed that we have exclusive access over `node`.
         unsafe { self.inner.lock_with_local_then_unchecked(&node.inner, f) }
     }
 

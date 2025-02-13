@@ -244,11 +244,15 @@ impl<L> PassiveSet<L> {
         let head = self.head.get();
         // SAFETY: Caller guaranteed that `node` is a non-null and aligned
         // pointer, and that this thread has exclusive access to its value.
-        unsafe { MutexNodeInit::link_next(node, head) };
-        unsafe { MutexNodeInit::unlink_prev(node) };
+        unsafe {
+            MutexNodeInit::link_next(node, head);
+            MutexNodeInit::unlink_prev(node);
+        }
         self.head.set(node);
-        // SAFETY: Already verified that `head` pointer is not null.
-        (!head.is_null()).then(|| unsafe { MutexNodeInit::link_prev(head, node) });
+        if !head.is_null() {
+            // SAFETY: Already verified that `head` pointer is not null.
+            unsafe { MutexNodeInit::link_prev(head, node) };
+        }
         self.tail.get().is_null().then(|| self.tail.set(node));
     }
 
@@ -338,8 +342,12 @@ pub struct Mutex<T: ?Sized, L, W, F> {
     data: UnsafeCell<T>,
 }
 
-// Same unsafe impls as `std::sync::Mutex`.
+// SAFETY: A `Mutex` is safe to be sent across thread boundaries as long as
+// the inlined protected data `T` is also safe to be sent to other threads.
 unsafe impl<T: ?Sized + Send, L, W, F> Send for Mutex<T, L, W, F> {}
+// SAFETY: A `Mutex` is safe to be shared across thread boundaries since it
+// guarantees linearization of access and modification to the protected data,
+// but only if the protected data `T` is safe to be sent to other threads.
 unsafe impl<T: ?Sized + Send, L, W, F> Sync for Mutex<T, L, W, F> {}
 
 impl<T, L, W, F> Mutex<T, L, W, F> {
@@ -610,8 +618,23 @@ pub struct MutexGuard<'a, T: ?Sized, L: Lock, W: Wait, F: Fairness> {
     head: &'a MutexNodeInit<L>,
 }
 
-// Same unsafe Sync impl as `std::sync::MutexGuard`.
-unsafe impl<T: ?Sized + Sync, L: Lock, W: Wait, F: Fairness> Sync for MutexGuard<'_, T, L, W, F> {}
+// SAFETY: A `MutexGuard` is safe to be sent across thread boundaries as long as
+// the referenced protected data `T` is also safe to be sent to other threads.
+// Note that `std::sync::MutexGuard` is `!Send` because it must be compatible
+// with `Pthreads` implementation on Linux, but we do not have this constraint.
+unsafe impl<T: ?Sized + Send, L: Lock + Send, W: Wait, F: Fairness> Send
+    for MutexGuard<'_, T, L, W, F>
+{
+}
+
+// SAFETY: A `MutexGuard` is safe to be shared across thread boundaries since
+// it owns exclusive access over the protected data during its lifetime, and so
+// the can safely share references to the data, but only if the protected data
+// is also safe to be shared with other cuncurrent threads.
+unsafe impl<T: ?Sized + Sync, L: Lock + Sync, W: Wait, F: Fairness> Sync
+    for MutexGuard<'_, T, L, W, F>
+{
+}
 
 impl<'a, T: ?Sized, L: Lock, W: Wait, F: Fairness> MutexGuard<'a, T, L, W, F> {
     /// Creates a new `MutexGuard` instance.
@@ -705,6 +728,6 @@ impl<T: ?Sized, L: Lock, W: Wait, F: Fairness> Drop for MutexGuard<'_, T, L, W, 
         // SAFETY: At most one guard drop call may be running at any given time
         // for its associated mutex. In that period, the unlocking thread is
         // the sole accessor of the mutex's passive set.
-        unsafe { self.lock.unlock_with(self.head) }
+        unsafe { self.lock.unlock_with(self.head) };
     }
 }

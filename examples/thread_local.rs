@@ -46,6 +46,7 @@ fn main() {
     }
     let _message = rx.recv();
 
+    // A thread local node is borrowed.
     let count = data.lock_with_local_then(&NODE, |data| *data);
     assert_eq!(count, N);
 }
