@@ -249,10 +249,8 @@ impl<L> PassiveSet<L> {
             MutexNodeInit::unlink_prev(node);
         }
         self.head.set(node);
-        if !head.is_null() {
-            // SAFETY: Already verified that `head` pointer is not null.
-            unsafe { MutexNodeInit::link_prev(head, node) };
-        }
+        // SAFETY: Already verified that `head` pointer is not null.
+        (!head.is_null()).then(|| unsafe { MutexNodeInit::link_prev(head, node) });
         self.tail.get().is_null().then(|| self.tail.set(node));
     }
 
@@ -263,7 +261,7 @@ impl<L> PassiveSet<L> {
     /// The current thread must have exclusive access over the passive set.
     unsafe fn pop_back(&self) -> *mut MutexNodeInit<L> {
         let tail = self.tail.get();
-        let false = tail.is_null() else { return tail };
+        let false = tail.is_null() else { return ptr::null_mut() };
         // SAFETY: Already verified that `tail` pointer is not null and caller
         // guaranteed that the current thread has exclusive access over the
         // passive set.
@@ -288,7 +286,7 @@ impl<L> PassiveSet<L> {
     /// The current thread must have exclusive access over the passive set.
     unsafe fn pop_front(&self) -> *mut MutexNodeInit<L> {
         let head = self.head.get();
-        let false = head.is_null() else { return head };
+        let false = head.is_null() else { return ptr::null_mut() };
         // SAFETY: Already verified that `head` pointer is not null and caller
         // guaranteed that the current thread has exclusive access over the
         // passive set.
