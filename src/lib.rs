@@ -21,6 +21,10 @@ pub(crate) mod inner;
 pub(crate) mod lock;
 pub(crate) mod xoshiro;
 
+#[cfg(feature = "parking")]
+#[cfg_attr(docsrs, doc(cfg(feature = "parking")))]
+pub mod parking;
+
 #[cfg(test)]
 pub(crate) mod test;
 
