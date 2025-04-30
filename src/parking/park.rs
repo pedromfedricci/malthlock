@@ -28,8 +28,8 @@ pub(crate) use wait::{CantPark, ParkWait};
 ///
 /// ```
 /// // Requires `parking` feature.
-/// use mcslock::parking::park::Park;
-/// use mcslock::relax::Spin;
+/// use malthlock::parking::park::Park;
+/// use malthlock::relax::Spin;
 ///
 /// #[derive(Default)]
 /// struct SpinThenPark(u32);

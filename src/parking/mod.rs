@@ -10,7 +10,6 @@
 //! implement the [`Park`] trait.
 //!
 //! [`raw`]: crate::parking::raw
-//! [`barging`]: crate::parking::barging
 //! [`park`]: crate::parking::park
 //! [`Park`]: crate::parking::park::Park
 

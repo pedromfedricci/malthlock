@@ -68,6 +68,66 @@ impl Default for MutexNode {
     }
 }
 
+/// A mutual exclusion primitive useful for protecting shared data.
+///
+/// This mutex will block threads waiting for the lock to become available. The
+/// mutex can also be statically initialized or created via a [`new`]
+/// constructor. Each mutex has a type parameter which represents the data that
+/// it is protecting. The data can only be accessed through closure parameters
+/// provided by [`lock_then`], [`lock_with_then`], [`try_lock_then`] and
+/// [`try_lock_with_then`] that guarantees that the data is only ever accessed
+/// when the mutex is locked.
+///
+/// # Examples
+///
+/// ```
+/// use std::sync::Arc;
+/// use std::thread;
+/// use std::sync::mpsc::channel;
+///
+/// use malthlock::parking::raw::{self, MutexNode};
+/// use malthlock::parking::park::SpinThenPark;
+///
+/// type Mutex<T> = raw::Mutex<T, SpinThenPark>;
+///
+/// const N: usize = 10;
+///
+/// // Spawn a few threads to increment a shared variable (non-atomically), and
+/// // let the main thread know once all increments are done.
+/// //
+/// // Here we're using an Arc to share memory among threads, and the data inside
+/// // the Arc is protected with a mutex.
+/// let data = Arc::new(Mutex::new(0));
+///
+/// let (tx, rx) = channel();
+/// for _ in 0..N {
+///     let (data, tx) = (data.clone(), tx.clone());
+///     thread::spawn(move || {
+///         // A queue node must be mutably accessible.
+///         let mut node = MutexNode::new();
+///         // The shared state can only be accessed once the lock is held.
+///         // Our non-atomic increment is safe because we're the only thread
+///         // which can access the shared state when the lock is held.
+///         //
+///         // We unwrap() the return value to assert that we are not expecting
+///         // threads to ever fail while holding the lock.
+///         data.lock_with_then(&mut node, |data| {
+///             *data += 1;
+///             if *data == N {
+///                 tx.send(()).unwrap();
+///             }
+///             // The lock is unlocked here at the end of the closure scope.
+///         });
+///     });
+/// }
+///
+/// rx.recv().unwrap();
+/// ```
+/// [`new`]: Mutex::new
+/// [`lock_then`]: Mutex::lock_then
+/// [`lock_with_then`]: Mutex::lock_with_then
+/// [`try_lock_then`]: Mutex::try_lock_then
+/// [`try_lock_with_then`]: Mutex::try_lock_with_then
 pub struct Mutex<T: ?Sized, P> {
     pub(super) inner: inner::Mutex<T, Parker, ParkWait<P>, LocalGenerator>,
 }
@@ -83,8 +143,8 @@ impl<T, P> Mutex<T, P> {
     /// # Examples
     ///
     /// ```
-    /// use malthlocklock::parking::raw;
-    /// use malthlocklock::parking::park::SpinThenPark;
+    /// use malthlock::parking::raw;
+    /// use malthlock::parking::park::SpinThenPark;
     ///
     /// type Mutex<T> = raw::Mutex<T, SpinThenPark>;
     ///
@@ -109,8 +169,8 @@ impl<T, P> Mutex<T, P> {
     /// # Examples
     ///
     /// ```
-    /// use malthlocklock::parking::raw;
-    /// use malthlocklock::parking::park::SpinThenPark;
+    /// use malthlock::parking::raw;
+    /// use malthlock::parking::park::SpinThenPark;
     ///
     /// type Mutex<T> = raw::Mutex<T, SpinThenPark>;
     ///

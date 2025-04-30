@@ -35,16 +35,16 @@ type Key = &'static LocalMutexNode;
 /// # Example
 ///
 /// ```
-/// use mcslock::parking::raw::spins::Mutex;
+/// use malthlock::parking::raw::spins::Mutex;
 ///
 /// // Multiple difenitions.
-/// mcslock::thread_local_parking_node! {
+/// malthlock::thread_local_parking_node! {
 ///     pub static NODE;
 ///     static OTHER_NODE1;
 /// }
 ///
 /// // Single definition.
-/// mcslock::thread_local_parking_node!(pub static OTHER_NODE2);
+/// malthlock::thread_local_parking_node!(pub static OTHER_NODE2);
 ///
 /// let mutex = Mutex::new(0);
 /// // Keys are provided to APIs by reference.
@@ -154,9 +154,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// use std::sync::Arc;
     /// use std::thread;
     ///
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Arc::new(Mutex::new(0));
     /// let c_mutex = Arc::clone(&mutex);
@@ -178,9 +178,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// Compile fail: borrows of the data cannot escape the given closure:
     ///
     /// ```compile_fail,E0515
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(1);
     /// let borrow = mutex.try_lock_with_local_then(&NODE, |data| &*data.unwrap());
@@ -190,9 +190,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// time:
     ///
     #[doc = concat!("```should_panic(expected = ", already_borrowed_error!(), ")")]
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(0);
     ///
@@ -246,9 +246,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// use std::sync::Arc;
     /// use std::thread;
     ///
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Arc::new(Mutex::new(0));
     /// let c_mutex = Arc::clone(&mutex);
@@ -270,9 +270,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// Compile fail: borrows of the data cannot escape the given closure:
     ///
     /// ```compile_fail,E0515
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(1);
     /// let data = unsafe {
@@ -284,9 +284,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// at the same time:
     ///
     /// ```no_run
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(0);
     ///
@@ -335,9 +335,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// use std::sync::Arc;
     /// use std::thread;
     ///
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Arc::new(Mutex::new(0));
     /// let c_mutex = Arc::clone(&mutex);
@@ -353,9 +353,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// Compile fail: borrows of the data cannot escape the given closure:
     ///
     /// ```compile_fail,E0515
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(1);
     /// let borrow = mutex.lock_with_local(&NODE, |guard| &*guard);
@@ -365,9 +365,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// time:
     ///
     #[doc = concat!("```should_panic(expected = ", already_borrowed_error!(), ")")]
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(0);
     ///
@@ -420,9 +420,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// use std::sync::Arc;
     /// use std::thread;
     ///
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Arc::new(Mutex::new(0));
     /// let c_mutex = Arc::clone(&mutex);
@@ -438,9 +438,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// Compile fail: borrows of the data cannot escape the given closure:
     ///
     /// ```compile_fail,E0515
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(1);
     /// let data = unsafe {
@@ -452,9 +452,9 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// at the same time:
     ///
     /// ```no_run
-    /// use mcslock::parking::raw::spins::Mutex;
+    /// use malthlock::parking::raw::spins::Mutex;
     ///
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(0);
     ///
@@ -479,8 +479,8 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     /// Mutable borrows must not escape the closure.
     ///
     /// ```compile_fail
-    /// use mcslock::parking::raw::spins::Mutex;
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// use malthlock::parking::raw::spins::Mutex;
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(1);
     /// let borrow = mutex.lock_with_local_then(&NODE, |data| data);
@@ -488,8 +488,8 @@ impl<T: ?Sized, P: Park> Mutex<T, P> {
     ///
     /// ```compile_fail,E0521
     /// use std::thread;
-    /// use mcslock::parking::raw::spins::Mutex;
-    /// mcslock::thread_local_parking_node!(static NODE);
+    /// use malthlock::parking::raw::spins::Mutex;
+    /// malthlock::thread_local_parking_node!(static NODE);
     ///
     /// let mutex = Mutex::new(1);
     /// mutex.lock_with_local_then(&NODE, |data| {

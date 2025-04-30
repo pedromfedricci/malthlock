@@ -1,3 +1,12 @@
+//! TODO: docs
+//!
+//! [`try_lock_then`]: Mutex::try_lock_then
+//! [`try_lock_with_then`]: Mutex::try_lock_with_then
+//! [`lock_then`]: Mutex::lock_then
+//! [`lock_with_then`]: Mutex::lock_with_then
+//! [`parking`]: crate::parking
+//! [`Park`]: crate::parking::park::Park
+
 mod mutex;
 pub use mutex::{Mutex, MutexNode};
 
@@ -23,7 +32,7 @@ pub mod spins {
     /// # Example
     ///
     /// ```
-    /// use mcslock::parking::raw::{spins::Mutex, MutexNode};
+    /// use malthlock::parking::raw::{spins::Mutex, MutexNode};
     ///
     /// let mutex = Mutex::new(0);
     /// let mut node = MutexNode::new();
@@ -50,7 +59,7 @@ pub mod spins {
         /// # Example
         ///
         /// ```
-        /// use mcslock::parking::raw::{spins::backoff::Mutex, MutexNode};
+        /// use malthlock::parking::raw::{spins::backoff::Mutex, MutexNode};
         ///
         /// let mutex = Mutex::new(0);
         /// let mut node = MutexNode::new();
@@ -79,7 +88,7 @@ pub mod yields {
     /// # Example
     ///
     /// ```
-    /// use mcslock::parking::raw::{yields::Mutex, MutexNode};
+    /// use malthlock::parking::raw::{yields::Mutex, MutexNode};
     ///
     /// let mutex = Mutex::new(0);
     /// let mut node = MutexNode::new();
@@ -106,7 +115,7 @@ pub mod yields {
         /// # Example
         ///
         /// ```
-        /// use mcslock::parking::raw::{yields::backoff::Mutex, MutexNode};
+        /// use malthlock::parking::raw::{yields::backoff::Mutex, MutexNode};
         ///
         /// let mutex = Mutex::new(0);
         /// let mut node = MutexNode::new();
@@ -133,7 +142,7 @@ pub mod loops {
     /// # Example
     ///
     /// ```
-    /// use mcslock::parking::raw::{loops::Mutex, MutexNode};
+    /// use malthlock::parking::raw::{loops::Mutex, MutexNode};
     ///
     /// let mutex = Mutex::new(0);
     /// let mut node = MutexNode::new();
@@ -157,7 +166,7 @@ pub mod immediate {
     /// # Example
     ///
     /// ```
-    /// use mcslock::parking::raw::{immediate::Mutex, MutexNode};
+    /// use malthlock::parking::raw::{immediate::Mutex, MutexNode};
     ///
     /// let mutex = Mutex::new(0);
     /// let mut node = MutexNode::new();

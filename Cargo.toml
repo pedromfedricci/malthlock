@@ -43,3 +43,7 @@ check-cfg = ["cfg(loom)", "cfg(tarpaulin)", "cfg(tarpaulin_include)"]
 [[example]]
 name = "thread_local"
 required-features = ["thread_local"]
+
+[[example]]
+name = "parking"
+required-features = ["parking", "thread_local"]
