@@ -165,7 +165,7 @@ mod common {
 #[cfg(all(loom, test))]
 #[cfg(not(tarpaulin_include))]
 mod loom {
-    use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
+    use core::sync::atomic::Ordering::{Relaxed, Release};
 
     use loom::sync::atomic::AtomicBool;
     use loom::thread;
