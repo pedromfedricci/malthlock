@@ -228,6 +228,7 @@ impl<L> PassiveSet<L> {
 
     /// Creates a new, loom based passive set (non-const).
     #[cfg(all(loom, test))]
+    #[cfg(not(tarpaulin_include))]
     fn new() -> Self {
         let head = Cell::null_mut();
         let tail = Cell::null_mut();
