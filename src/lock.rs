@@ -1,4 +1,4 @@
-use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
+use core::sync::atomic::Ordering::{Relaxed, Release};
 
 use crate::cfg::atomic::AtomicBool;
 use crate::relax::Relax;
@@ -37,28 +37,11 @@ pub trait Lock {
     #[cfg(all(loom, test))]
     fn unlocked() -> Self;
 
-    /// Tries to lock the mutex with acquire ordering.
-    ///
-    /// Returns `true` if successfully moved from unlocked state to locked
-    /// state, `false` otherwise.
-    fn try_lock_acquire(&self) -> bool;
-
-    /// Tries to lock the mutex with acquire ordering and weak exchange.
-    ///
-    /// Returns `true` if successfully moved from unlocked state to locked
-    /// state, `false` otherwise.
-    fn try_lock_acquire_weak(&self) -> bool;
-
     /// Blocks the thread untill the lock is acquired, applies some arbitrary
     /// waiting policy while the lock is still on hold somewhere else.
     ///
     /// The lock is loaded with a relaxed ordering.
     fn wait_lock_relaxed<W: Wait>(&self);
-
-    /// Returns `true` if the lock is currently held.
-    ///
-    /// This function does not guarantee strong ordering, only atomicity.
-    fn is_locked_relaxed(&self) -> bool;
 
     /// Changes the state of the lock and, possibly, notifies that change
     /// to some other interested party.
@@ -130,14 +113,6 @@ impl Lock for AtomicBool {
         Self::new(false)
     }
 
-    fn try_lock_acquire(&self) -> bool {
-        self.compare_exchange(false, true, Acquire, Relaxed).is_ok()
-    }
-
-    fn try_lock_acquire_weak(&self) -> bool {
-        self.compare_exchange_weak(false, true, Acquire, Relaxed).is_ok()
-    }
-
     fn wait_lock_relaxed<W: Wait>(&self) {
         // Block the thread with a relaxed loop until the load returns `false`,
         // indicating that the lock was handed off to the current thread.
@@ -145,10 +120,6 @@ impl Lock for AtomicBool {
         while self.load(Relaxed) {
             relax_policy.relax.relax();
         }
-    }
-
-    fn is_locked_relaxed(&self) -> bool {
-        self.load(Relaxed)
     }
 
     fn notify_release(&self) {

@@ -47,18 +47,6 @@ pub trait ParkerT {
     /// This function does not guarantee strong ordering, only atomicity.
     fn is_locked_relaxed(&self) -> bool;
 
-    /// Tries to lock this mutex with acquire load.
-    ///
-    /// Returns `true` if successfully moved from unlocked state to locked
-    /// state, `false` otherwise.
-    fn try_lock_acquire(&self) -> bool;
-
-    /// Tries to lock this mutex with acquire load and weak exchange.
-    ///
-    /// Returns `true` if successfully moved from unlocked state to locked
-    /// state, `false` otherwise.
-    fn try_lock_acquire_weak(&self) -> bool;
-
     /// Blocks unless or until the current thread's token is made availiable.
     ///
     /// Implementors of this function are expected to call the platform's
@@ -115,20 +103,8 @@ impl Lock for Parker {
         ParkerT::unlocked()
     }
 
-    fn try_lock_acquire(&self) -> bool {
-        ParkerT::try_lock_acquire(self)
-    }
-
-    fn try_lock_acquire_weak(&self) -> bool {
-        ParkerT::try_lock_acquire_weak(self)
-    }
-
     fn wait_lock_relaxed<W: Wait>(&self) {
         park_current_thread_relaxed::<Self, W>(self);
-    }
-
-    fn is_locked_relaxed(&self) -> bool {
-        ParkerT::is_locked_relaxed(self)
     }
 
     fn notify_release(&self) {
@@ -140,7 +116,7 @@ impl Lock for Parker {
 mod common {
     use core::ptr;
     use core::sync::atomic::AtomicU32;
-    use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
+    use core::sync::atomic::Ordering::{Relaxed, Release};
 
     use super::ParkerT;
 
@@ -164,14 +140,6 @@ mod common {
             let state = AtomicU32::new(UNLOCKED);
             Self { state }
         };
-
-        fn try_lock_acquire(&self) -> bool {
-            self.state.compare_exchange(UNLOCKED, LOCKED, Acquire, Relaxed).is_ok()
-        }
-
-        fn try_lock_acquire_weak(&self) -> bool {
-            self.state.compare_exchange_weak(UNLOCKED, LOCKED, Acquire, Relaxed).is_ok()
-        }
 
         fn is_locked_relaxed(&self) -> bool {
             self.state.load(Relaxed) == LOCKED
@@ -221,14 +189,6 @@ mod loom {
         fn unlocked() -> Self {
             let locked = AtomicBool::new(UNLOCKED);
             Self { locked }
-        }
-
-        fn try_lock_acquire(&self) -> bool {
-            self.locked.compare_exchange(UNLOCKED, LOCKED, Acquire, Relaxed).is_ok()
-        }
-
-        fn try_lock_acquire_weak(&self) -> bool {
-            self.locked.compare_exchange_weak(UNLOCKED, LOCKED, Acquire, Relaxed).is_ok()
         }
 
         fn is_locked_relaxed(&self) -> bool {
