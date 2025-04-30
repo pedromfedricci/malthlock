@@ -79,6 +79,7 @@ pub mod cell {
         type Target = T;
 
         #[cfg(not(all(loom, test)))]
+        #[cfg(not(tarpaulin_include))]
         unsafe fn with_unchecked<F, Ret>(&self, f: F) -> Ret
         where
             F: FnOnce(&Self::Target) -> Ret,
@@ -152,6 +153,7 @@ pub mod cell {
         };
 
         #[cfg(all(loom, test))]
+        #[cfg(not(tarpaulin_include))]
         fn null_mut() -> Cell<*mut Self::Target> {
             Self::new(core::ptr::null_mut())
         }
