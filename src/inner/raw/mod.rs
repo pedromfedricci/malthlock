@@ -189,6 +189,7 @@ impl<L: Lock> MutexNode<L> {
     /// Initializes this node's inner state, returning a shared reference
     /// pointing to it (non-const).
     #[cfg(all(loom, test))]
+    #[cfg(not(tarpaulin_include))]
     fn initialize(&mut self) -> &MutexNodeInit<L> {
         self.inner.write(MutexNodeInit::locked())
     }
