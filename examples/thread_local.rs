@@ -1,5 +1,5 @@
-use std::sync::mpsc::channel;
 use std::sync::Arc;
+use std::sync::mpsc::channel;
 use std::thread;
 
 use malthlock::raw::spins::Mutex;

@@ -1,8 +1,8 @@
-use std::sync::mpsc::channel;
 use std::sync::Arc;
+use std::sync::mpsc::channel;
 use std::thread;
 
-use malthlock::raw::{spins::Mutex, MutexNode};
+use malthlock::raw::{MutexNode, spins::Mutex};
 
 fn main() {
     const N: usize = 10;
