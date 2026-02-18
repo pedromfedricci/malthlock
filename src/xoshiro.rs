@@ -1,4 +1,4 @@
-use rand_xoshiro::rand_core::{RngCore, SeedableRng};
+use rand_xoshiro::rand_core::{Rng, SeedableRng};
 use rand_xoshiro::{Seed512, Xoshiro512StarStar};
 
 use crate::cfg::cell::{UnsafeCell, UnsafeCellWith};
@@ -14,8 +14,8 @@ impl Generator {
     /// Creates a new, seeded `Generator` instance.
     fn new() -> Self {
         let seed = Seed512::default();
-        let gen = Xoshiro512StarStar::from_seed(seed);
-        let inner = UnsafeCell::new(gen);
+        let n_gen = Xoshiro512StarStar::from_seed(seed);
+        let inner = UnsafeCell::new(n_gen);
         Self { inner }
     }
 }
@@ -34,10 +34,10 @@ pub struct LocalGenerator {
 impl LocalGenerator {
     /// Returns next random `u64` from thread local generator.
     fn next_u64(&'static self) -> u64 {
-        let next_u64 = |gen: &mut Xoshiro512StarStar| gen.next_u64();
+        let next_u64 = |ng: &mut Xoshiro512StarStar| ng.next_u64();
         // SAFETY: This key is only ever accessed within its own thread, and it
         // is not aliased when the cast to `&mut T` (by UnsafeCell) happens.
-        self.key.with(|gen| unsafe { gen.inner.with_mut_unchecked(next_u64) })
+        self.key.with(|ng| unsafe { ng.inner.with_mut_unchecked(next_u64) })
     }
 }
 

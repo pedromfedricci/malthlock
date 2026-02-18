@@ -4,7 +4,7 @@ use core::mem::MaybeUninit;
 use core::ptr;
 use core::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed, Release};
 
-use crate::cfg::atomic::{fence, AtomicPtr, AtomicPtrNull, UnsyncLoad};
+use crate::cfg::atomic::{AtomicPtr, AtomicPtrNull, UnsyncLoad, fence};
 use crate::cfg::cell::{Cell, CellNullMut, UnsafeCell, UnsafeCellOptionWith, UnsafeCellWith};
 use crate::fairness::Fairness;
 use crate::lock::{Lock, Wait};
@@ -29,7 +29,7 @@ pub struct MutexNodeInit<L> {
 impl<L> MutexNodeInit<L> {
     /// Returns a raw mutable pointer of this node.
     const fn as_ptr(&self) -> *mut Self {
-        (self as *const Self).cast_mut()
+        ptr::from_ref(self).cast_mut()
     }
 
     /// A relaxed loop that returns a pointer to the successor once it finishes
@@ -180,7 +180,16 @@ impl<L> MutexNode<L> {
 
 impl<L: Lock> MutexNode<L> {
     /// Initializes this node's inner state, returning a shared reference
-    /// pointing to it.
+    /// pointing to it (const).
+    #[cfg(not(all(loom, test)))]
+    const fn initialize(&mut self) -> &MutexNodeInit<L> {
+        self.inner.write(MutexNodeInit::locked())
+    }
+
+    /// Initializes this node's inner state, returning a shared reference
+    /// pointing to it (non-const).
+    #[cfg(all(loom, test))]
+    #[cfg(not(tarpaulin_include))]
     fn initialize(&mut self) -> &MutexNodeInit<L> {
         self.inner.write(MutexNodeInit::locked())
     }
@@ -249,10 +258,8 @@ impl<L> PassiveSet<L> {
             MutexNodeInit::unlink_prev(node);
         }
         self.head.set(node);
-        if !head.is_null() {
-            // SAFETY: Already verified that `head` pointer is not null.
-            unsafe { MutexNodeInit::link_prev(head, node) };
-        }
+        // SAFETY: Already verified that `head` pointer is not null.
+        (!head.is_null()).then(|| unsafe { MutexNodeInit::link_prev(head, node) });
         self.tail.get().is_null().then(|| self.tail.set(node));
     }
 
@@ -263,7 +270,7 @@ impl<L> PassiveSet<L> {
     /// The current thread must have exclusive access over the passive set.
     unsafe fn pop_back(&self) -> *mut MutexNodeInit<L> {
         let tail = self.tail.get();
-        let false = tail.is_null() else { return tail };
+        let false = tail.is_null() else { return ptr::null_mut() };
         // SAFETY: Already verified that `tail` pointer is not null and caller
         // guaranteed that the current thread has exclusive access over the
         // passive set.
@@ -288,7 +295,7 @@ impl<L> PassiveSet<L> {
     /// The current thread must have exclusive access over the passive set.
     unsafe fn pop_front(&self) -> *mut MutexNodeInit<L> {
         let head = self.head.get();
-        let false = head.is_null() else { return head };
+        let false = head.is_null() else { return ptr::null_mut() };
         // SAFETY: Already verified that `head` pointer is not null and caller
         // guaranteed that the current thread has exclusive access over the
         // passive set.

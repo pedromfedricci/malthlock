@@ -2,10 +2,10 @@ pub mod atomic {
     pub use sealed::{AtomicPtrNull, UnsyncLoad};
 
     #[cfg(not(all(loom, test)))]
-    pub use core::sync::atomic::{fence, AtomicBool, AtomicPtr};
+    pub use core::sync::atomic::{AtomicBool, AtomicPtr, fence};
 
     #[cfg(all(loom, test))]
-    pub use loom::sync::atomic::{fence, AtomicBool, AtomicPtr};
+    pub use loom::sync::atomic::{AtomicBool, AtomicPtr, fence};
 
     impl<T> UnsyncLoad for AtomicPtr<T> {
         type Target = T;
