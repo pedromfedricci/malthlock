@@ -5,9 +5,10 @@ and eventually fair lock for mutual exclusion, referred to as Malthusian lock.
 """
 name = "malthlock"
 version = "0.1.0"
-edition = "2021"
-# NOTE: Rust 1.65 is required for GATs and let-else statements.
-rust-version = "1.65.0"
+edition = "2024"
+# NOTE: Rust version 1.85 is required by rand_xoshiro at 0.8.
+# https://github.com/rust-random/rngs
+rust-version = "1.85"
 license = "MIT OR Apache-2.0"
 readme = "README.md"
 documentation = "https://docs.rs/malthlock"
@@ -21,7 +22,7 @@ yield = []
 thread_local = []
 
 [dependencies.rand_xoshiro]
-version = "0.7"
+version = "0.8"
 
 [target.'cfg(loom)'.dev-dependencies.loom]
 version = "0.7"

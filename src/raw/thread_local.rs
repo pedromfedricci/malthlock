@@ -204,7 +204,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     ///     let mutex = Mutex::new(());
     ///     mutex.try_lock_with_local_then(&NODE, |_data| ());
     /// });
-    /// ```
+    #[doc = "```"]
     #[inline]
     #[track_caller]
     pub fn try_lock_with_local_then<F, Ret>(&self, node: Key, f: F) -> Ret
@@ -379,7 +379,7 @@ impl<T: ?Sized, R: Relax> Mutex<T, R> {
     ///     let mutex = Mutex::new(());
     ///     mutex.lock_with_local_then(&NODE, |_data| ());
     /// });
-    /// ```
+    #[doc = "```"]
     #[inline]
     #[track_caller]
     pub fn lock_with_local_then<F, Ret>(&self, node: Key, f: F) -> Ret

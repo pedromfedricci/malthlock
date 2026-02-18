@@ -3,7 +3,7 @@
 ## Minimum Supported Rust Version (MSRV)
 
 This crate is guaranteed to compile on a Minimum Supported Rust Version (MSRV)
-of 1.65.0 and above. This version will not be changed without a minor version
+of 1.85.0 and above. This version will not be changed without a minor version
 bump.
 
 ## License

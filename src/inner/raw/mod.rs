@@ -4,7 +4,7 @@ use core::mem::MaybeUninit;
 use core::ptr;
 use core::sync::atomic::Ordering::{AcqRel, Acquire, Relaxed, Release};
 
-use crate::cfg::atomic::{fence, AtomicPtr, AtomicPtrNull, UnsyncLoad};
+use crate::cfg::atomic::{AtomicPtr, AtomicPtrNull, UnsyncLoad, fence};
 use crate::cfg::cell::{Cell, CellNullMut, UnsafeCell, UnsafeCellOptionWith, UnsafeCellWith};
 use crate::fairness::Fairness;
 use crate::lock::{Lock, Wait};
@@ -29,7 +29,7 @@ pub struct MutexNodeInit<L> {
 impl<L> MutexNodeInit<L> {
     /// Returns a raw mutable pointer of this node.
     const fn as_ptr(&self) -> *mut Self {
-        (self as *const Self).cast_mut()
+        ptr::from_ref(self).cast_mut()
     }
 
     /// A relaxed loop that returns a pointer to the successor once it finishes
@@ -181,7 +181,7 @@ impl<L> MutexNode<L> {
 impl<L: Lock> MutexNode<L> {
     /// Initializes this node's inner state, returning a shared reference
     /// pointing to it.
-    fn initialize(&mut self) -> &MutexNodeInit<L> {
+    const fn initialize(&mut self) -> &MutexNodeInit<L> {
         self.inner.write(MutexNodeInit::locked())
     }
 }
