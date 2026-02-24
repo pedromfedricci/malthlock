@@ -7,26 +7,6 @@ CLIPPY_FLAGS_LOOM = "${CFG_LOOM} ${CLIPPY_FLAGS}"
 [config]
 default_to_workspace = false
 
-# Install a "no_std" target.
-[tasks.install-no-std-target]
-command = "rustup"
-args = ["target", "add", "thumbv7m-none-eabi"]
-
-# Build package for no_std environment.
-[tasks.no-std]
-command = "cargo"
-args = [
-  "hack",
-  "build",
-  "--target",
-  "thumbv7m-none-eabi",
-  "--feature-powerset",
-  "--no-dev-deps",
-  "--skip",
-  "yield,thread_local",
-]
-dependencies = ["install-no-std-target"]
-
 # Build docs for docs.rs.
 [tasks.docsrs]
 toolchain = "nightly"

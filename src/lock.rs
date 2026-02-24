@@ -1,7 +1,10 @@
-use core::sync::atomic::Ordering::{Acquire, Relaxed, Release};
+use core::sync::atomic::Ordering::{Relaxed, Release};
 
 use crate::cfg::atomic::AtomicBool;
 use crate::relax::Relax;
+
+#[cfg(feature = "parking")]
+use crate::parking::park::Park;
 
 /// A `Lock` is some arbitrary data type used by a lock implementation to
 /// manage the state of the lock.
@@ -34,28 +37,11 @@ pub trait Lock {
     #[cfg(all(loom, test))]
     fn unlocked() -> Self;
 
-    /// Tries to lock the mutex with acquire ordering.
-    ///
-    /// Returns `true` if successfully moved from unlocked state to locked
-    /// state, `false` otherwise.
-    fn try_lock_acquire(&self) -> bool;
-
-    /// Tries to lock the mutex with acquire ordering and weak exchange.
-    ///
-    /// Returns `true` if successfully moved from unlocked state to locked
-    /// state, `false` otherwise.
-    fn try_lock_acquire_weak(&self) -> bool;
-
     /// Blocks the thread untill the lock is acquired, applies some arbitrary
     /// waiting policy while the lock is still on hold somewhere else.
     ///
     /// The lock is loaded with a relaxed ordering.
     fn wait_lock_relaxed<W: Wait>(&self);
-
-    /// Returns `true` if the lock is currently held.
-    ///
-    /// This function does not guarantee strong ordering, only atomicity.
-    fn is_locked_relaxed(&self) -> bool;
 
     /// Changes the state of the lock and, possibly, notifies that change
     /// to some other interested party.
@@ -70,6 +56,40 @@ pub trait Wait {
 
     /// The relax operation that will be excuted during unlock waiting loops.
     type UnlockRelax: Relax;
+
+    /// The thread parking policy that will be executed during lock contention.
+    ///
+    /// Enabled only for thread parking capable policies.
+    #[cfg(feature = "parking")]
+    type Park: Park;
+
+    /// Returns a initialzed relax waiting policy.
+    fn relax_policy() -> RelaxPolicy<Self> {
+        let relax = Self::LockRelax::new();
+        RelaxPolicy { relax }
+    }
+
+    /// Returns a initialized thread parking waiting policy.
+    ///
+    /// Enabled only for thread parking capable policies.
+    #[cfg(feature = "parking")]
+    fn parking_policy() -> ParkingPolicy<Self> {
+        let relax = Self::LockRelax::new();
+        let park = Self::Park::new();
+        ParkingPolicy { relax, park }
+    }
+}
+
+/// A waiting policy that is only composed of a relax policy.
+pub struct RelaxPolicy<W: Wait + ?Sized> {
+    pub relax: W::LockRelax,
+}
+
+/// A waiting policy that is composed of both relax and thread parking policies.
+#[cfg(feature = "parking")]
+pub struct ParkingPolicy<W: Wait + ?Sized> {
+    pub relax: W::LockRelax,
+    pub park: W::Park,
 }
 
 impl Lock for AtomicBool {
@@ -93,25 +113,13 @@ impl Lock for AtomicBool {
         Self::new(false)
     }
 
-    fn try_lock_acquire(&self) -> bool {
-        self.compare_exchange(false, true, Acquire, Relaxed).is_ok()
-    }
-
-    fn try_lock_acquire_weak(&self) -> bool {
-        self.compare_exchange_weak(false, true, Acquire, Relaxed).is_ok()
-    }
-
     fn wait_lock_relaxed<W: Wait>(&self) {
         // Block the thread with a relaxed loop until the load returns `false`,
         // indicating that the lock was handed off to the current thread.
-        let mut relax = W::LockRelax::new();
+        let mut relax_policy = W::relax_policy();
         while self.load(Relaxed) {
-            relax.relax();
+            relax_policy.relax.relax();
         }
-    }
-
-    fn is_locked_relaxed(&self) -> bool {
-        self.load(Relaxed)
     }
 
     fn notify_release(&self) {
